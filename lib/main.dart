@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 
 Future<void> main() async {
   // Ensure that plugin services are initialized so that `availableCameras()`
@@ -13,6 +16,8 @@ Future<void> main() async {
 
   // Obtain a list of the available cameras on the device.
   final cameras = await availableCameras();
+  print(cameras.first.lensDirection);
+  print(cameras);
 
   // Get a specific camera from the list of available cameras.
   final firstCamera = cameras.first;
@@ -29,8 +34,9 @@ Future<void> main() async {
 }
 
 Future<http.Response> callValidation(List<dynamic> base64EncodedImages) {
+  print("Call validation");
   return http.post(
-    Uri.parse('https://localhost:4000/validation'),
+    Uri.parse('http://localhost:4000/validation/'),
     headers: <String, String>{
       'Authorization': 'TOKEN',
       'Accept': 'application/json',
@@ -84,20 +90,30 @@ class TakePictureScreenState extends State<TakePictureScreen> {
     // Next, initialize the controller. This returns a Future.
     _initializeControllerFuture = _controller.initialize();
     _timer = Timer.periodic(const Duration(seconds: 1), (_timer) async {
-      //try {
+      try {
       final currentImage = await _controller.takePicture();
       capturedImageList.add(currentImage);
-      if (capturedImageList.length >= 5) {
+      if (capturedImageList.length >= 1) {
         var base64Images = [];
         for (var capturedImage in capturedImageList) {
-          var base64Image = base64Encode(await capturedImage.readAsBytes());
-          base64Images.add(base64Image);
+          img.Image? image = img.decodeImage(await capturedImage.readAsBytes());
+          if (image != null){
+            print('Found image');
+            var resized = img.flipHorizontal(img.copyResize(image, width:384));
+            var resizedJpg = Uint8List.fromList(img.encodeJpg(resized));
+            //var base64Image = base64Encode(await capturedImage.readAsBytes());
+            var base64Image = base64Encode(resizedJpg);
+            base64Images.add(base64Image);
+          }
         }
         var validationResult = await callValidation(base64Images);
-        print(validationResult);
+        print(jsonDecode(validationResult.body));
         capturedImageList.clear();
       }
       print('length: ${capturedImageList.length}');
+      } catch (e) {
+        print(e);
+      }
     });
   }
 
