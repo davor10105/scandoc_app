@@ -42,6 +42,11 @@ dependencies:
   image: ^4.0.17
   flutter_image_compress: ^2.0.3
   flutter_nfc_kit: ^3.3.1
+  universal_html: ^2.2.3
+  camerawesome: ^1.4.0
+  dmrtd:
+    path: 'dmrtd'
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
