@@ -47,6 +47,7 @@ dependencies:
   dmrtd:
     path: 'dmrtd'
   intl: ^0.18.1
+  flutter_spinkit: ^5.2.0
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +75,11 @@ flutter:
   assets:
     - images/wide_scandoc.png
     - images/icons8-user-90.png
+    - images/transparent_duck.gif
+    - images/nfc_signal.gif
+    - images/nfc_card.gif
+    - images/icons8-checkmark-480.png
+    - images/beep_short.wav
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
