@@ -80,6 +80,9 @@ flutter:
     - images/nfc_card.gif
     - images/icons8-checkmark-480.png
     - images/beep_short.wav
+    - images/scan_card.gif
+    - images/nfc_scan_card.gif
+    - images/scan_image.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

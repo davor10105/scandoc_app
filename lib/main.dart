@@ -129,6 +129,14 @@ void main() {
   runApp(const CameraAwesomeApp());
 }
 
+enum Pages {
+  CAMERASCAN,
+  NFCSCAN,
+  RESULTS,
+  HOMEPAGE,
+  QRSCAN,
+}
+
 class CameraAwesomeApp extends StatelessWidget {
   const CameraAwesomeApp({super.key});
 
@@ -233,10 +241,13 @@ class _CameraPageState extends State<CameraPage> {
   AnalysisController? analysisController;
   var progressValue = 0.0;
   var nfcStatusText = '';
-  var currentPage = 0;
+  Pages currentPage = Pages.HOMEPAGE;
   var needsFlip = false;
   var successExtraction = false;
   int consecutiveValidationSuccess = 0;
+  bool enableSaveButton = true;
+
+  var storedExtractionData = [];
 
   final NfcProvider _nfc = NfcProvider();
   // ignore: unused_field
@@ -282,6 +293,13 @@ class _CameraPageState extends State<CameraPage> {
     "FathersGivenName": "Father's Given Name",
   };
 
+  Map documentTypeMap = {
+    'ID': 'Identity Document',
+    'PASS': 'Passport',
+    'DL': "Driver's Licence",
+    'RP': 'Residence Permit',
+  };
+
   void resetState() {
     setState(() {
       frontDocumentImage = null;
@@ -295,10 +313,11 @@ class _CameraPageState extends State<CameraPage> {
       var _docNumber = null;
       var _dob = null;
       var _doe = null;
-      currentPage = 0;
+      currentPage = Pages.HOMEPAGE;
       needsFlip = false;
       successExtraction = false;
       consecutiveValidationSuccess = 0;
+      enableSaveButton = true;
     });
   }
 
@@ -341,7 +360,7 @@ class _CameraPageState extends State<CameraPage> {
   Future<void> _readMRTD() async {
     print('START READING NFC');
 
-    if (!_isReading && currentPage == 1) {
+    if (!_isReading && currentPage == Pages.NFCSCAN) {
       _isReading = true;
       try {
         setState(() {
@@ -540,7 +559,7 @@ class _CameraPageState extends State<CameraPage> {
         setState(() {
           progressValue = 1.0;
           nfcStatusText = 'Finished.';
-          currentPage = 2;
+          currentPage = Pages.RESULTS;
         });
 
         setState(() {
@@ -790,6 +809,184 @@ class _CameraPageState extends State<CameraPage> {
     super.dispose();
   }
 
+  Widget _storageResultList() {
+    if (storedExtractionData.length == 0) {
+      Widget noDataDisplay = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                child: Image.asset(
+                  'images/scan_image.png',
+                  width: 250,
+                ),
+              ),
+            ],
+          ),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: 250,
+                child: Text(
+                  'Your scan history is empty, tap "Scan Document" to begin',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      return noDataDisplay;
+    }
+
+    List<Widget> retVal = [];
+    var divider = const Divider(
+      height: 20,
+      thickness: 1,
+      indent: 8,
+      endIndent: 8,
+      color: Color.fromARGB(255, 194, 215, 253),
+    );
+    retVal.add(divider);
+    for (var storedSingleExtractionResult in storedExtractionData) {
+      String title = '';
+      if (storedSingleExtractionResult['Data']['Name']['RecommendedValue'] !=
+          null) {
+        title +=
+            storedSingleExtractionResult['Data']['Name']['RecommendedValue'];
+      }
+      if (storedSingleExtractionResult['Data']['Surname']['RecommendedValue'] !=
+          null) {
+        if (title != '') {
+          title += ' ';
+        }
+        title +=
+            storedSingleExtractionResult['Data']['Surname']['RecommendedValue'];
+      }
+
+      var decodedFaceImage = null;
+      if (storedSingleExtractionResult['ImageData']['FaceImage'] != null) {
+        decodedFaceImage = Image.memory(
+          base64Decode(storedSingleExtractionResult['ImageData']['FaceImage']),
+          fit: BoxFit.fill,
+          //gaplessPlayback: true,
+        );
+      }
+
+      Widget faceImage = Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          width: 30,
+          child: decodedFaceImage != null ? decodedFaceImage : Container(),
+        ),
+      );
+
+      bool hasReadNFC =
+          storedSingleExtractionResult['Data']['Name']['NFC']['Read'];
+
+      String documentType = documentTypeMap[
+          storedSingleExtractionResult['Metadata'][0]['DocumentType']];
+
+      var listElement = Padding(
+        padding: const EdgeInsets.only(
+          left: 8,
+          right: 8,
+        ),
+        child: ListTile(
+          leading: faceImage,
+          tileColor: const Color.fromARGB(255, 255, 255, 255),
+          title: Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: 3.0,
+                          ),
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                            ),
+                          ),
+                        ),
+                        Text(
+                          documentType,
+                          style: const TextStyle(fontSize: 8),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                children: hasReadNFC
+                    ? [
+                        Icon(
+                          Icons.nfc,
+                          color: Colors.green,
+                        ),
+                        Text(
+                          'NFC Read',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ]
+                    : [
+                        Icon(
+                          Icons.nfc,
+                          color: Colors.red,
+                        ),
+                        Text(
+                          'NFC Not Read',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              currentExtractionResult = storedSingleExtractionResult;
+              currentPage = Pages.RESULTS;
+              enableSaveButton = false;
+              print('Kita');
+            });
+          },
+        ),
+      );
+
+      retVal.add(listElement);
+      retVal.add(divider);
+    }
+
+    return CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Column(
+            children: retVal,
+          ),
+        ),
+      ],
+    );
+  }
+
   List<Widget> _extractionResultList() {
     List<Widget> retVal = [];
 
@@ -996,13 +1193,13 @@ class _CameraPageState extends State<CameraPage> {
     }*/
     Widget? page;
     switch (currentPage) {
-      case 0:
+      case Pages.CAMERASCAN:
         page = CameraAwesomeBuilder.previewOnly(
           previewFit: CameraPreviewFit.cover,
           onImageForAnalysis: (img) => _analyzeImage(img),
           imageAnalysisConfig: AnalysisConfig(
             androidOptions: const AndroidAnalysisOptions.jpeg(
-              width: 384,
+              width: 640,
             ),
             maxFramesPerSecond: 1,
           ),
@@ -1012,7 +1209,7 @@ class _CameraPageState extends State<CameraPage> {
           },
         );
         break;
-      case 1:
+      case Pages.NFCSCAN:
         page = Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1045,7 +1242,7 @@ class _CameraPageState extends State<CameraPage> {
                     onPressed: () {
                       addNFCData();
                       setState(() {
-                        currentPage = 2;
+                        currentPage = Pages.RESULTS;
                       });
                     },
                     child: const Icon(Icons.forward),
@@ -1061,7 +1258,7 @@ class _CameraPageState extends State<CameraPage> {
           ],
         );
         break;
-      case 2:
+      case Pages.RESULTS:
         page = CustomScrollView(slivers: [
           SliverFillRemaining(
             hasScrollBody: false,
@@ -1074,13 +1271,35 @@ class _CameraPageState extends State<CameraPage> {
                       children: _extractionResultList(), //_mrtdDataWidgets(),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: FloatingActionButton(
-                      // btn Read MRTD
-                      onPressed: resetState,
-                      child: const Icon(Icons.exit_to_app),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: FloatingActionButton(
+                          // btn Read MRTD
+                          onPressed: () {
+                            setState(() {
+                              currentPage = Pages.QRSCAN;
+                            });
+                          },
+                          child: const Icon(Icons.qr_code_2),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: FloatingActionButton(
+                          // btn Read MRTD
+                          onPressed: () {
+                            if (enableSaveButton) {
+                              storedExtractionData.add(currentExtractionResult);
+                            }
+                            resetState();
+                          },
+                          child: const Icon(Icons.exit_to_app),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1088,8 +1307,67 @@ class _CameraPageState extends State<CameraPage> {
           ),
         ]);
         break;
+      case Pages.HOMEPAGE:
+        page = Column(
+          children: [
+            Expanded(
+              child: _storageResultList(),
+            ),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: FloatingActionButton.extended(
+                  label: Text('Scan Document'),
+                  icon: Icon(Icons.add),
+                  onPressed: () {
+                    setState(() {
+                      currentPage = Pages.CAMERASCAN;
+                    });
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+        break;
+      case Pages.QRSCAN:
+        page = CameraAwesomeBuilder.previewOnly(
+          previewFit: CameraPreviewFit.cover,
+          onImageForAnalysis: (img) => _analyzeQRImage(img),
+          imageAnalysisConfig: AnalysisConfig(
+            androidOptions: const AndroidAnalysisOptions.jpeg(
+              width: 640,
+            ),
+            maxFramesPerSecond: 1,
+          ),
+          builder: (state, previewSize, previewRect) {
+            analysisController = state.analysisController;
+            return Stack(
+              children: [
+                RectangleQRDisplay(),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: FloatingActionButton(
+                      // btn Read MRTD
+                      onPressed: () {
+                        setState(() {
+                          currentPage = Pages.RESULTS;
+                        });
+                      },
+                      child: const Icon(Icons.keyboard_return),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+        break;
       default:
-        page = Container();
+        page = Placeholder();
     }
 
     return Scaffold(
@@ -1133,7 +1411,7 @@ class _CameraPageState extends State<CameraPage> {
         currentExtractionResult = jsonExtractionResult;
         _mrtdData = null;
         runningCamera = false;
-        currentPage = 1;
+        currentPage = Pages.NFCSCAN;
       });
       await _readMRTD();
     }
@@ -1190,6 +1468,29 @@ class _CameraPageState extends State<CameraPage> {
       } catch (e) {
         print('No validation endpoint');
       }
+    }, yuv420: (Yuv420Image image) {
+      //return handleYuv420( image);
+    }, nv21: (Nv21Image image) {
+      //return handleNv21(image);
+    }, bgra8888: (Bgra8888Image image) {
+      //return handleBgra8888(image);
+    });
+    processingImage = false;
+  }
+
+  Future _analyzeQRImage(AnalysisImage analysisImage) async {
+    if (processingImage) return;
+    processingImage = true;
+    await analysisImage.when(jpeg: (JpegImage image) async {
+      //return handleJpeg(image);
+
+      //print('KITA');
+      //print(image.width);
+      var dartImage = img.decodeImage(image.bytes);
+      var angle = getAngle(image.rotation);
+      //print(image.rotation);
+      dartImage = img.copyRotate(dartImage!, angle: angle);
+      print('QR Kita');
     }, yuv420: (Yuv420Image image) {
       //return handleYuv420( image);
     }, nv21: (Nv21Image image) {
@@ -1308,6 +1609,52 @@ class _RectangleDisplayState extends State<RectangleDisplay>
               child: widget.successExtraction
                   ? InfoPanel(widget.successExtraction)
                   : Container(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class RectangleQRDisplay extends StatefulWidget {
+  RectangleQRDisplay({
+    super.key,
+  });
+
+  @override
+  State<RectangleQRDisplay> createState() => _RectangleQRDisplayState();
+}
+
+class _RectangleQRDisplayState extends State<RectangleQRDisplay>
+    with SingleTickerProviderStateMixin {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var screenWidth = MediaQuery.of(context).size.width;
+    return Align(
+      alignment: Alignment.center,
+      child: Stack(
+        children: [
+          Container(
+            width: screenWidth * 0.5,
+            height: screenWidth * 0.5,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                width: 1,
+                color: Colors.white,
+              ),
+              color: Color.fromARGB(50, 255, 255, 255),
             ),
           ),
         ],
