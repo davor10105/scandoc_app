@@ -359,16 +359,11 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<void> _readMRTD() async {
     print('START READING NFC');
-
+    bool readSuccessfully = false;
     if (!_isReading && currentPage == Pages.NFCSCAN) {
       _isReading = true;
       try {
         setState(() {
-          /*_mrtdData = null;
-          _alertMessage = "Waiting for Passport tag ...";
-          _isReading = true;
-          runningCamera = false;
-          currentPage = 1;*/
           nfcStatusText = 'Looking for an NFC Document...';
         });
 
@@ -376,16 +371,12 @@ class _CameraPageState extends State<CameraPage> {
             iosAlertMessage: "Hold your phone near Biometric Passport");
         final passport = Passport(_nfc);
 
-        print('PASSPORT');
-
         setState(() {
           _alertMessage = "Reading Passport ...";
           nfcStatusText = 'Found the NFC Document. Acquiring data...';
         });
 
         final mrtdData = MrtdData();
-
-        print('MRTD DATA');
 
         try {
           mrtdData.cardAccess = await passport.readEfCardAccess();
@@ -420,7 +411,7 @@ class _CameraPageState extends State<CameraPage> {
           nfcStatusText = 'Reading DG2...';
         });
 
-        if (mrtdData.com!.dgTags.contains(EfDG2.TAG)) {
+        /*if (mrtdData.com!.dgTags.contains(EfDG2.TAG)) {
           mrtdData.dg2 = await passport.readEfDG2();
         }
 
@@ -547,7 +538,7 @@ class _CameraPageState extends State<CameraPage> {
           nfcStatusText = 'Reading EFSOD...';
         });
 
-        mrtdData.sod = await passport.readEfSOD();
+        mrtdData.sod = await passport.readEfSOD(); */
 
         print('Procitao');
 
@@ -555,6 +546,7 @@ class _CameraPageState extends State<CameraPage> {
 
         _mrtdData = mrtdData;
         addNFCData();
+        readSuccessfully = true;
 
         setState(() {
           progressValue = 1.0;
@@ -602,8 +594,6 @@ class _CameraPageState extends State<CameraPage> {
           _isReading = false;
           _alertMessage = alertMsg;
         });
-
-        await _readMRTD();
       } finally {
         if (_alertMessage.isNotEmpty) {
           await _nfc.disconnect(iosErrorMessage: _alertMessage);
@@ -615,6 +605,9 @@ class _CameraPageState extends State<CameraPage> {
           _isReading = false;
         });
       }
+    }
+    if (!readSuccessfully) {
+      await _readMRTD();
     }
   }
 
@@ -929,37 +922,61 @@ class _CameraPageState extends State<CameraPage> {
                   ],
                 ),
               ),
-              Column(
-                children: hasReadNFC
-                    ? [
-                        Icon(
-                          Icons.nfc,
-                          color: Colors.green,
-                        ),
-                        Text(
-                          'NFC Read',
-                          style: TextStyle(
-                            fontSize: 10,
+              Container(
+                width: 50,
+                child: Column(
+                  children: hasReadNFC
+                      ? [
+                          const Icon(
+                            Icons.nfc,
                             color: Colors.green,
                           ),
-                        ),
-                      ]
-                    : [
-                        Icon(
-                          Icons.nfc,
-                          color: Colors.red,
-                        ),
-                        Text(
-                          'NFC Not Read',
-                          style: TextStyle(
-                            fontSize: 10,
+                          const Text(
+                            'NFC',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ]
+                      : [
+                          const Icon(
+                            Icons.nfc,
                             color: Colors.red,
                           ),
-                        ),
-                      ],
+                          const Text(
+                            'No NFC',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                ),
               ),
             ],
           ),
+          trailing: PopupMenuButton(onSelected: (result) {
+            setState(() {
+              storedExtractionData.remove(result);
+            });
+          }, itemBuilder: (BuildContext context) {
+            return [
+              PopupMenuItem(
+                value: storedSingleExtractionResult,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text('Remove'),
+                    ),
+                    Icon(Icons.delete),
+                  ],
+                ),
+              )
+            ];
+          }),
           onTap: () {
             setState(() {
               currentExtractionResult = storedSingleExtractionResult;
