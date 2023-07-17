@@ -48,6 +48,7 @@ dependencies:
     path: 'dmrtd'
   intl: ^0.18.1
   flutter_spinkit: ^5.2.0
+  google_mlkit_barcode_scanning: ^0.8.0
 
 dev_dependencies:
   flutter_test:
