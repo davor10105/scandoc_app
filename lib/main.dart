@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:expandable/expandable.dart';
 import 'package:flutter/cupertino.dart';
@@ -246,6 +248,7 @@ class _CameraPageState extends State<CameraPage> {
   var successExtraction = false;
   int consecutiveValidationSuccess = 0;
   bool enableSaveButton = true;
+  dynamic currentQR;
 
   var storedExtractionData = [];
 
@@ -257,6 +260,7 @@ class _CameraPageState extends State<CameraPage> {
   var _isNfcAvailable = false;
   var _isReading = false;
   final _mrzData = GlobalKey<FormState>();
+  final _barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.qrCode]);
 
   // mrz data
   var _docNumber; //'117118381';
@@ -799,6 +803,7 @@ class _CameraPageState extends State<CameraPage> {
 
   @override
   void dispose() {
+    _barcodeScanner.close();
     super.dispose();
   }
 
@@ -1216,7 +1221,7 @@ class _CameraPageState extends State<CameraPage> {
           onImageForAnalysis: (img) => _analyzeImage(img),
           imageAnalysisConfig: AnalysisConfig(
             androidOptions: const AndroidAnalysisOptions.jpeg(
-              width: 640,
+              width: 1024,
             ),
             maxFramesPerSecond: 1,
           ),
@@ -1294,22 +1299,19 @@ class _CameraPageState extends State<CameraPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: FloatingActionButton(
-                          // btn Read MRTD
-                          onPressed: () {
-                            setState(() {
-                              currentPage = Pages.QRSCAN;
-                            });
-                          },
-                          child: const Icon(Icons.qr_code_2),
+                      if (currentQR != null)
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: FloatingActionButton(
+                            onPressed: () async {
+                              await _uploadToWeb();
+                            },
+                            child: const Icon(Icons.upload),
+                          ),
                         ),
-                      ),
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: FloatingActionButton(
-                          // btn Read MRTD
                           onPressed: () {
                             if (enableSaveButton) {
                               storedExtractionData.add(currentExtractionResult);
@@ -1335,17 +1337,33 @@ class _CameraPageState extends State<CameraPage> {
             ),
             Align(
               alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: FloatingActionButton.extended(
-                  label: Text('Scan Document'),
-                  icon: Icon(Icons.add),
-                  onPressed: () {
-                    setState(() {
-                      currentPage = Pages.CAMERASCAN;
-                    });
-                  },
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: FloatingActionButton(
+                      child: Icon(Icons.qr_code_2),
+                      onPressed: () {
+                        setState(() {
+                          currentPage = Pages.QRSCAN;
+                        });
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: FloatingActionButton.extended(
+                      label: Text('Scan Document'),
+                      icon: Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          currentPage = Pages.CAMERASCAN;
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1356,10 +1374,10 @@ class _CameraPageState extends State<CameraPage> {
           previewFit: CameraPreviewFit.cover,
           onImageForAnalysis: (img) => _analyzeQRImage(img),
           imageAnalysisConfig: AnalysisConfig(
-            androidOptions: const AndroidAnalysisOptions.jpeg(
-              width: 640,
+            androidOptions: const AndroidAnalysisOptions.nv21(
+              width: 1024,
             ),
-            maxFramesPerSecond: 1,
+            maxFramesPerSecond: 5,
           ),
           builder: (state, previewSize, previewRect) {
             analysisController = state.analysisController;
@@ -1374,7 +1392,7 @@ class _CameraPageState extends State<CameraPage> {
                       // btn Read MRTD
                       onPressed: () {
                         setState(() {
-                          currentPage = Pages.RESULTS;
+                          currentPage = Pages.HOMEPAGE;
                         });
                       },
                       child: const Icon(Icons.keyboard_return),
@@ -1406,6 +1424,33 @@ class _CameraPageState extends State<CameraPage> {
           ),
         ),
         body: page);
+  }
+
+  Future _connectToWeb() async {
+    print("Connect to web");
+    print('http://192.168.1.5:6969/share/connect/$currentQR');
+    return http.post(
+      Uri.parse('http://192.168.1.5:6969/share/connect/$currentQR'),
+      headers: <String, String>{
+        'Accept': 'application/json',
+      },
+      body: {},
+    );
+  }
+
+  Future _uploadToWeb() async {
+    print("Upload to web kita");
+    print('http://192.168.1.5:6969/share/send/$currentQR');
+    return http.post(
+      Uri.parse('http://192.168.1.5:6969/share/send/$currentQR'),
+      headers: <String, String>{
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'data': currentExtractionResult,
+      }),
+    );
   }
 
   Future _processFrontBack() async {
@@ -1444,7 +1489,7 @@ class _CameraPageState extends State<CameraPage> {
       //return handleJpeg(image);
 
       //print('KITA');
-      //print(image.width);
+      print('${image.width} ${image.height}');
       var dartImage = img.decodeImage(image.bytes);
       var angle = getAngle(image.rotation);
       //print(image.rotation);
@@ -1490,8 +1535,18 @@ class _CameraPageState extends State<CameraPage> {
       }
     }, yuv420: (Yuv420Image image) {
       //return handleYuv420( image);
-    }, nv21: (Nv21Image image) {
-      //return handleNv21(image);
+    }, nv21: (Nv21Image image) async {
+      print('GOTTEN NV21');
+      print('${image.width} ${image.height}');
+      var dartImage = img.Image.fromBytes(
+        width: image.width,
+        height: image.height,
+        bytes: image.planes.first.bytes.buffer,
+        format: null!,
+      );
+      var angle = getAngle(image.rotation);
+      //print(image.rotation);
+      dartImage = img.copyRotate(dartImage!, angle: angle);
     }, bgra8888: (Bgra8888Image image) {
       //return handleBgra8888(image);
     });
@@ -1501,23 +1556,53 @@ class _CameraPageState extends State<CameraPage> {
   Future _analyzeQRImage(AnalysisImage analysisImage) async {
     if (processingImage) return;
     processingImage = true;
-    await analysisImage.when(jpeg: (JpegImage image) async {
-      //return handleJpeg(image);
+    await analysisImage.when(
+        jpeg: (JpegImage image) async {},
+        yuv420: (Yuv420Image image) {
+          //return handleYuv420( image);
+        },
+        nv21: (Nv21Image image) async {
+          //return handleJpeg(image);
 
-      //print('KITA');
-      //print(image.width);
-      var dartImage = img.decodeImage(image.bytes);
-      var angle = getAngle(image.rotation);
-      //print(image.rotation);
-      dartImage = img.copyRotate(dartImage!, angle: angle);
-      print('QR Kita');
-    }, yuv420: (Yuv420Image image) {
-      //return handleYuv420( image);
-    }, nv21: (Nv21Image image) {
-      //return handleNv21(image);
-    }, bgra8888: (Bgra8888Image image) {
-      //return handleBgra8888(image);
-    });
+          //print('KITA');
+          //print(image.width);
+          //var dartImage = img.decodeImage(image.bytes);
+          var angle = getAngle(image.rotation);
+          //print(image.rotation);
+          //dartImage = img.copyRotate(dartImage!, angle: angle);
+          print('Usao u qr');
+          print(image.width);
+          print(image.height);
+
+          try {
+            var inputImage = InputImage.fromBytes(
+              bytes: image.bytes,
+              metadata: InputImageMetadata(
+                size: Size(image.width.toDouble(), image.height.toDouble()),
+                rotation: InputImageRotationValue.fromRawValue(
+                    angle)!, // used only in Android
+                format: InputImageFormat.nv21, // used only in iOS
+                bytesPerRow: image.planes.first.bytesPerRow, // used only in iOS
+              ),
+            );
+            var recognizedBarCodes =
+                await _barcodeScanner.processImage(inputImage);
+            for (Barcode barcode in recognizedBarCodes) {
+              var qrUUID = Uuid.unparse(Uuid.parse(barcode.rawValue!));
+              currentQR = qrUUID;
+              await _connectToWeb();
+              print("Connected with UUID: ${qrUUID}");
+              setState(() {
+                currentPage = Pages.HOMEPAGE;
+              });
+            }
+          } catch (error) {
+            print("...sending image resulted error $error");
+          }
+        },
+        bgra8888: (Bgra8888Image image) {
+          //return handleBgra8888(image);
+        });
     processingImage = false;
   }
 
