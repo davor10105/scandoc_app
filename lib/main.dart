@@ -1241,7 +1241,10 @@ class _CameraPageState extends State<CameraPage> {
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(nfcStatusText),
+              child: Text(
+                nfcStatusText,
+                textAlign: TextAlign.center,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
