@@ -869,7 +869,7 @@ class _CameraPageState extends State<CameraPage> {
             storedSingleExtractionResult['Data']['Surname']['RecommendedValue'];
       }
 
-      var decodedFaceImage = null;
+      Image? decodedFaceImage;
       if (storedSingleExtractionResult['ImageData']['FaceImage'] != null) {
         decodedFaceImage = Image.memory(
           base64Decode(storedSingleExtractionResult['ImageData']['FaceImage']),
@@ -882,7 +882,7 @@ class _CameraPageState extends State<CameraPage> {
         padding: const EdgeInsets.all(8.0),
         child: Container(
           width: 30,
-          child: decodedFaceImage != null ? decodedFaceImage : Container(),
+          child: decodedFaceImage ?? Container(),
         ),
       );
 
