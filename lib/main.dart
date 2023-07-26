@@ -44,7 +44,7 @@ class ScanDocApp extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: Color.fromARGB(255, 99, 135, 255))),
         ),
-        home: ScanDocPage(),
+        home: const ScanDocPage(),
       ),
     );
   }
@@ -104,19 +104,19 @@ class ScanDocPage extends StatelessWidget {
     Widget? page;
     switch (appState.currentPage) {
       case Pages.HOMEPAGE:
-        page = HomePage();
+        page = const HomePage();
         break;
       case Pages.CAMERASCAN:
-        page = CameraScanPage();
+        page = const CameraScanPage();
         break;
       case Pages.NFCSCAN:
-        page = NFCScanPage();
+        page = const NFCScanPage();
         break;
       case Pages.RESULTS:
-        page = ResultsPage();
+        page = const ResultsPage();
         break;
       case Pages.QRSCAN:
-        page = QRScanPage();
+        page = const QRScanPage();
         break;
       default:
         page = const Placeholder();
@@ -129,7 +129,7 @@ class ScanDocPage extends StatelessWidget {
         title: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Center(
-            child: Container(
+            child: SizedBox(
               height: 40,
               child: Image.asset(
                 'images/wide_scandoc.png',

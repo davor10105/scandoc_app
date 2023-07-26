@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: FloatingActionButton(
-                  child: Icon(Icons.qr_code_2),
+                  child: const Icon(Icons.qr_code_2),
                   onPressed: () {
                     appState.setCurrentPage(Pages.QRSCAN);
                   },
@@ -40,8 +40,8 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: FloatingActionButton.extended(
-                  label: Text('Scan Document'),
-                  icon: Icon(Icons.add),
+                  label: const Text('Scan Document'),
+                  icon: const Icon(Icons.add),
                   onPressed: () {
                     appState.resetCurrentData();
                     appState.setCurrentPage(Pages.CAMERASCAN);
@@ -121,13 +121,12 @@ class _HomePageState extends State<HomePage> {
         decodedFaceImage = Image.memory(
           base64Decode(storedSingleExtractionResult['ImageData']['FaceImage']),
           fit: BoxFit.fill,
-          //gaplessPlayback: true,
         );
       }
 
       Widget faceImage = Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Container(
+        child: SizedBox(
           width: 30,
           child: decodedFaceImage ?? Container(),
         ),
@@ -174,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              Container(
+              SizedBox(
                 width: 50,
                 child: Column(
                   children: hasReadNFC

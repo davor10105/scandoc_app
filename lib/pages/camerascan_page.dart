@@ -61,6 +61,8 @@ class _CameraScanPageState extends State<CameraScanPage> {
   @override
   Widget build(BuildContext context) {
     ScanDocAppState appState = context.watch<ScanDocAppState>();
+
+    // create image stream to main scandoc service
     return CameraAwesomeBuilder.previewOnly(
       previewFit: CameraPreviewFit.cover,
       onImageForAnalysis: (img) => _analyzeImage(img, appState),
@@ -72,6 +74,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
       ),
       builder: (state, previewSize, previewRect) {
         analysisController = state.analysisController;
+        // include document rectangle and button to return
         return Stack(
           children: [
             RectangleDisplay(needsFlip, successExtraction),
@@ -96,13 +99,9 @@ class _CameraScanPageState extends State<CameraScanPage> {
     processingImage = true;
     await analysisImage.when(
         jpeg: (JpegImage image) async {
-          //return handleJpeg(image);
-
-          //print('KITA');
           print('${image.width} ${image.height}');
           var dartImage = img.decodeImage(image.bytes);
           var angle = getAngle(image.rotation);
-          //print(image.rotation);
           dartImage = img.copyRotate(dartImage!, angle: angle);
           String base64Image =
               base64Encode(Uint8List.fromList(img.encodeJpg(dartImage)));
@@ -157,7 +156,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
   Future<http.Response> callValidation(List<dynamic> base64EncodedImages) {
     print("Call validation");
     return http.post(
-      Uri.parse('${SCANDOC_URL}/validation/'),
+      Uri.parse('$SCANDOC_URL/validation/'),
       headers: <String, String>{
         'Authorization': 'TOKEN',
         'Accept': 'application/json',
@@ -180,7 +179,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
     print("Call extraction");
     bool shouldSendBackImage = !(backDocumentImage == null);
     return http.post(
-      Uri.parse('${SCANDOC_URL}/extraction/'),
+      Uri.parse('$SCANDOC_URL/extraction/'),
       headers: <String, String>{
         'Authorization': 'TOKEN',
         'Accept': 'application/json',
@@ -222,6 +221,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
       appState.setCurrentExtractionResult(jsonExtractionResult);
       appState.setCurrentPage(Pages.NFCSCAN);
     } else {
+      // TODO: implement a way of informing the user
       _resetCurrentState();
       print('Could not read document, please try againg');
     }
