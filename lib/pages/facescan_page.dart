@@ -57,7 +57,10 @@ class _FaceScanPageState extends State<FaceScanPage> {
         rotationAngle: getAngle(image.rotation),
       );
 
-      // TODO: send captured image and NFC (or document) face image to face recognition endpoint
+      // TODO: send captured image and NFC (or document (if nfc not present)) face image to face recognition endpoint
+      // results = await callFR(nfcImage, selfieImage)
+      // if {results.success} true;
+      // TODO: add data to appState.currentExtractionResult
     });
     processingImage = false;
   }

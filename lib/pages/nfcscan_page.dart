@@ -223,16 +223,19 @@ class _NFCScanPageState extends State<NFCScanPage> {
           nfcStatusText = 'Reading DG2...';
         });
 
-        //uncomment to extract face image
-        /*if (mrtdData.com!.dgTags.contains(EfDG2.TAG)) {
+        // uncomment to extract face image
+        if (mrtdData.com!.dgTags.contains(EfDG2.TAG)) {
           mrtdData.dg2 = await passport.readEfDG2();
-        }*/
+        }
+        // TODO: find magic number and ending number and do something with image (send to Vlaic microservice)
 
         print('Procitao');
 
         print(mrtdData);
 
         _mrtdData = mrtdData;
+
+        // TODO: add decoded image object to currentExtractionResult
         addNFCData(appState);
         readSuccessfully = true;
 
@@ -260,6 +263,7 @@ class _NFCScanPageState extends State<NFCScanPage> {
     print(_mrtdData);
     Map nfcDataTranslate = {};
     if (_mrtdData != null) {
+      // TODO: add nfcimage to appState.currentExtractionResult
       nfcDataTranslate = {
         "Name": _mrtdData!.dg1!.mrz.firstName,
         "Surname": _mrtdData!.dg1!.mrz.lastName,
