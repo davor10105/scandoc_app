@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:scandoc_app/utils/camerascan_infopanel.dart';
 
 class RectangleDisplay extends StatefulWidget {
-  var needsFlip;
-  var successExtraction;
+  final bool needsFlip;
+  final bool successExtraction;
 
-  RectangleDisplay(
-    this.needsFlip,
-    this.successExtraction, {
+  const RectangleDisplay({
     super.key,
+    required this.needsFlip,
+    required this.successExtraction,
   });
 
   @override
@@ -74,7 +74,9 @@ class _RectangleDisplayState extends State<RectangleDisplay>
             child: Align(
               alignment: Alignment.center,
               child: widget.successExtraction
-                  ? InfoPanel(widget.successExtraction)
+                  ? InfoPanel(
+                      successExtraction: widget.successExtraction,
+                    )
                   : Container(),
             ),
           ),

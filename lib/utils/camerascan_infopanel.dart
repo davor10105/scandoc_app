@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class InfoPanel extends StatefulWidget {
-  var successExtraction;
-  InfoPanel(
-    this.successExtraction, {
+  final bool successExtraction;
+  const InfoPanel({
     super.key,
+    required this.successExtraction,
   });
 
   @override
@@ -45,7 +45,7 @@ class _InfoPanelState extends State<InfoPanel>
     if (widget.successExtraction) {
       controller.forward();
     }
-    return Container(
+    return SizedBox(
       width: 100,
       child: Stack(children: [
         Container(
@@ -55,7 +55,7 @@ class _InfoPanelState extends State<InfoPanel>
             width: 70 - (pow(animation.value, 2) - 1) * 20,
           ),
         ),
-        SpinKitRing(
+        const SpinKitRing(
           color: Color.fromARGB(255, 227, 252, 198),
           size: 100.0,
         ),

@@ -78,7 +78,10 @@ class _CameraScanPageState extends State<CameraScanPage> {
         // include document rectangle and button to return
         return Stack(
           children: [
-            RectangleDisplay(needsFlip, successExtraction),
+            RectangleDisplay(
+              needsFlip: needsFlip,
+              successExtraction: successExtraction,
+            ),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
