@@ -1,5 +1,15 @@
 import 'package:camerawesome/camerawesome_plugin.dart';
 
+class ScanDocInputImage {
+  final String imageHex;
+  final int rotationAngle;
+
+  const ScanDocInputImage({
+    required this.imageHex,
+    required this.rotationAngle,
+  });
+}
+
 int getAngle(InputAnalysisImageRotation rotation) {
   switch (rotation) {
     case InputAnalysisImageRotation.rotation0deg:

@@ -1,4 +1,5 @@
 import 'package:camerawesome/camerawesome_plugin.dart';
+import 'package:dmrtd/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -99,15 +100,12 @@ class _CameraScanPageState extends State<CameraScanPage> {
     processingImage = true;
     await analysisImage.when(
         jpeg: (JpegImage image) async {
-          print('${image.width} ${image.height}');
-          var dartImage = img.decodeImage(image.bytes);
-          var angle = getAngle(image.rotation);
-          dartImage = img.copyRotate(dartImage!, angle: angle);
-          String base64Image =
-              base64Encode(Uint8List.fromList(img.encodeJpg(dartImage)));
+          ScanDocInputImage inputImage = ScanDocInputImage(
+              imageHex: image.bytes.hex(),
+              rotationAngle: getAngle(image.rotation));
           try {
             print(consecutiveValidationSuccess);
-            dynamic result = await callValidation([base64Image]);
+            dynamic result = await callValidation(inputImage);
             var jsonValidationResult = jsonDecode(result.body);
             print(jsonValidationResult);
             if (jsonValidationResult['Status'] == 200 &&
@@ -115,9 +113,9 @@ class _CameraScanPageState extends State<CameraScanPage> {
               if (consecutiveValidationSuccess >= 2) {
                 consecutiveValidationSuccess = 0;
                 if (jsonValidationResult['Side'] == 'FRONT') {
-                  frontDocumentImage = base64Image;
+                  frontDocumentImage = inputImage;
                 } else {
-                  backDocumentImage = base64Image;
+                  backDocumentImage = inputImage;
                 }
                 if (jsonValidationResult['InfoCode'] == '1007') {
                   if (frontDocumentImage == null || backDocumentImage == null) {
@@ -140,6 +138,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
               consecutiveValidationSuccess = 0;
             }
           } catch (e) {
+            print(e);
             print('No validation endpoint');
           }
         },
@@ -153,7 +152,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
     processingImage = false;
   }
 
-  Future<http.Response> callValidation(List<dynamic> base64EncodedImages) {
+  Future<http.Response> callValidation(ScanDocInputImage inputImage) {
     print("Call validation");
     return http.post(
       Uri.parse('$SCANDOC_URL/validation/'),
@@ -165,7 +164,11 @@ class _CameraScanPageState extends State<CameraScanPage> {
       body: jsonEncode(<String, dynamic>{
         'AcceptTermsAndConditions': true,
         'DataFields': {
-          'Images': base64EncodedImages,
+          'Images': [inputImage.imageHex],
+          'ImageMetadata': {
+            'Type': 'bytes',
+            'Rotation': 360 - inputImage.rotationAngle,
+          },
         },
         'Settings': {
           'SkipImageSizeCheck': true,
@@ -174,8 +177,8 @@ class _CameraScanPageState extends State<CameraScanPage> {
     );
   }
 
-  Future<http.Response> callExtraction(
-      String? frontDocumentImage, String? backDocumentImage) {
+  Future<http.Response> callExtraction(ScanDocInputImage? frontDocumentImage,
+      ScanDocInputImage? backDocumentImage) {
     print("Call extraction");
     bool shouldSendBackImage = !(backDocumentImage == null);
     return http.post(
@@ -188,12 +191,16 @@ class _CameraScanPageState extends State<CameraScanPage> {
       body: jsonEncode(<String, dynamic>{
         'AcceptTermsAndConditions': true,
         'DataFields': {
-          'BackImage': shouldSendBackImage ? backDocumentImage : '',
+          'BackImage': shouldSendBackImage ? backDocumentImage.imageHex : '',
           'BackImageCropped': false,
-          'BackImageType': 'base64',
-          'FrontImage': frontDocumentImage,
+          'BackImageType': 'bytes',
+          'BackImageRotation': shouldSendBackImage
+              ? 360 - backDocumentImage.rotationAngle
+              : null,
+          'FrontImage': frontDocumentImage!.imageHex,
           'FrontImageCropped': false,
-          'FrontImageType': 'base64',
+          'FrontImageType': 'bytes',
+          'FrontImageRotation': 360 - frontDocumentImage.rotationAngle,
         },
         'Settings': {
           'IgnoreBackImage': !shouldSendBackImage,

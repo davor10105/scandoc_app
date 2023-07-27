@@ -18,3 +18,37 @@ class ReturnButton extends StatelessWidget {
     );
   }
 }
+
+class QRButton extends StatelessWidget {
+  // button that redirects to qr scan page
+  final ScanDocAppState appState;
+  const QRButton({super.key, required this.appState});
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      child: const Icon(Icons.qr_code_2),
+      onPressed: () {
+        appState.setCurrentPage(Pages.QRSCAN);
+      },
+    );
+  }
+}
+
+class ScanDocumentButton extends StatelessWidget {
+  // button that redirects to camera scan page
+  final ScanDocAppState appState;
+  const ScanDocumentButton({super.key, required this.appState});
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton.extended(
+      label: const Text('Scan Document'),
+      icon: const Icon(Icons.add),
+      onPressed: () {
+        appState.resetCurrentData();
+        appState.setCurrentPage(Pages.CAMERASCAN);
+      },
+    );
+  }
+}

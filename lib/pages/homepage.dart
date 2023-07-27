@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:scandoc_app/constants/constants.dart';
 import 'package:scandoc_app/main.dart';
+import 'package:scandoc_app/utils/buttons.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -30,22 +31,14 @@ class _HomePageState extends State<HomePage> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: FloatingActionButton(
-                  child: const Icon(Icons.qr_code_2),
-                  onPressed: () {
-                    appState.setCurrentPage(Pages.QRSCAN);
-                  },
+                child: QRButton(
+                  appState: appState,
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: FloatingActionButton.extended(
-                  label: const Text('Scan Document'),
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    appState.resetCurrentData();
-                    appState.setCurrentPage(Pages.CAMERASCAN);
-                  },
+                child: ScanDocumentButton(
+                  appState: appState,
                 ),
               ),
             ],
