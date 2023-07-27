@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:scandoc_app/pages/camerascan_page.dart';
+import 'package:scandoc_app/pages/facescan_page.dart';
 import 'package:scandoc_app/pages/homepage.dart';
 import 'package:scandoc_app/pages/qrscan_page.dart';
 import 'package:scandoc_app/pages/results_page.dart';
@@ -111,6 +112,9 @@ class ScanDocPage extends StatelessWidget {
         break;
       case Pages.NFCSCAN:
         page = const NFCScanPage();
+        break;
+      case Pages.FACESCAN:
+        page = const FaceScanPage();
         break;
       case Pages.RESULTS:
         page = const ResultsPage();

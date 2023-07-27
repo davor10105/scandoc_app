@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class RectangleQRDisplay extends StatelessWidget {
-  const RectangleQRDisplay({
+class FaceDisplay extends StatelessWidget {
+  const FaceDisplay({
     super.key,
   });
 
@@ -14,9 +14,9 @@ class RectangleQRDisplay extends StatelessWidget {
         children: [
           Container(
             width: screenWidth * 0.5,
-            height: screenWidth * 0.5,
+            height: screenWidth * 0.75,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(100),
               border: Border.all(
                 width: 1,
                 color: Colors.white,

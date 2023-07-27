@@ -142,7 +142,7 @@ class _NFCScanPageState extends State<NFCScanPage> {
               FloatingActionButton(
                 onPressed: () {
                   addNFCData(appState);
-                  appState.setCurrentPage(Pages.RESULTS);
+                  appState.setCurrentPage(Pages.FACESCAN);
                 },
                 child: const Icon(Icons.forward),
               ),
